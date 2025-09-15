@@ -1,10 +1,29 @@
 const MistralClient = require('@mistralai/mistralai');
 
+const client = new MistralClient(process.env.MISTRAL_API_KEY);
+
 exports.handler = async function(event, context) {
+  // Handle CORS preflight requests
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      },
+      body: ''
+    };
+  }
+
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
@@ -16,27 +35,18 @@ exports.handler = async function(event, context) {
     if (!message) {
       return {
         statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ error: 'Message is required' })
       };
     }
 
-    // Initialize the Mistral client with your API key
-    const apiKey = process.env.MISTRAL_API_KEY;
-    
-    if (!apiKey) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'API key not configured' })
-      };
-    }
-    
-    const client = new MistralClient(apiKey);
-
-    // Call the Mistral API
-    const chatResponse = await client.chat.complete({
-      model: "mistral-large-latest",
-      messages: [{ role: "user", content: message }],
-      maxTokens: 1000,
+    // Call the Mistral Agents API
+    const response = await client.agents.complete({
+      agentId: "ag:9aca5309:20250914:oporupa-v1:77f094a7",
+      messages: [{ role: "user", content: message }]
     });
 
     // Return the response
@@ -44,11 +54,10 @@ exports.handler = async function(event, context) {
       statusCode: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type'
+        'Access-Control-Allow-Origin': '*'
       },
       body: JSON.stringify({ 
-        response: chatResponse.choices[0].message.content 
+        response: response.choices[0].message.content 
       })
     };
     
@@ -59,8 +68,7 @@ exports.handler = async function(event, context) {
       statusCode: 500,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type'
+        'Access-Control-Allow-Origin': '*'
       },
       body: JSON.stringify({ 
         error: 'Internal server error',
