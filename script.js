@@ -48,7 +48,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Network response was not ok');
             }
             
             const data = await response.json();
@@ -56,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
         } catch (error) {
             console.error('Error:', error);
-            return "I'm sorry, I'm experiencing technical difficulties at the moment. Please try again later.";
+            return "I'm sorry, I'm experiencing technical difficulties at the moment. Please try again later. Error: " + error.message;
         } finally {
             hideLoading();
         }
