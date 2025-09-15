@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showLoading();
         
         try {
+            console.log('Sending message to function:', message);
             const response = await fetch('/.netlify/functions/oporupa-chat', {
                 method: 'POST',
                 headers: {
@@ -47,16 +48,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ message })
             });
             
+            console.log('Response status:', response.status);
+            
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Network response was not ok');
+                const errorText = await response.text();
+                console.error('Error response:', errorText);
+                throw new Error(`Server returned ${response.status}: ${errorText}`);
             }
             
             const data = await response.json();
+            console.log('Success response:', data);
             return data.response;
             
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Full error:', error);
             return "I'm sorry, I'm experiencing technical difficulties at the moment. Please try again later. Error: " + error.message;
         } finally {
             hideLoading();
